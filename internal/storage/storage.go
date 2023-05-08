@@ -11,6 +11,7 @@ type RealStorage interface {
 	Save(chatID int64, service string, pair entity.Pair) error
 	Get(chatID int64, service string) (entity.Pair, error)
 	Delete(chatID int64, service string) error
+	GetLang(chatID int64) (string, error)
 }
 
 type Storage struct {
@@ -25,6 +26,7 @@ func New() (*Storage, error) {
 		ramStorage: &sync.Map{},
 	}, nil
 }
+
 func (s *Storage) Save(chatID int64, service string, pair entity.Pair) error {
 	us, err := s.getUserStorage(chatID)
 	if err != nil && !errors.Is(err, ErrNotFound) {

@@ -27,13 +27,14 @@ var (
 func init() {
 	f.EncryptionKey = flag.String("key", "", "-key=KEY")
 	f.Token = flag.String("token", "", "-token=TOKEN")
-	f.DeletionInterval = flag.Duration("interval", 1*time.Second, "-interval=1s")
+	f.DeletionInterval = flag.Duration("interval", 7*time.Second, "-interval=1s")
 }
 
 // Config contains all the settings for configuring the application.
 type Config struct {
-	EncryptionKey string
-	Token         string
+	EncryptionKey    string
+	Token            string
+	DeletionInterval time.Duration
 }
 
 // New initializing the config for the application.
@@ -57,7 +58,8 @@ func New() (*Config, error) {
 	}
 
 	return &Config{
-		EncryptionKey: *f.EncryptionKey,
-		Token:         *f.Token,
+		EncryptionKey:    *f.EncryptionKey,
+		Token:            *f.Token,
+		DeletionInterval: *f.DeletionInterval,
 	}, nil
 }
