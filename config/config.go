@@ -12,6 +12,8 @@ type Flag struct {
 	EncryptionKey    *string
 	Token            *string
 	DeletionInterval *time.Duration
+	Storage          *string
+	DSN              *string
 }
 
 var (
@@ -28,6 +30,8 @@ func init() {
 	f.EncryptionKey = flag.String("key", "", "-key=KEY")
 	f.Token = flag.String("token", "", "-token=TOKEN")
 	f.DeletionInterval = flag.Duration("interval", 7*time.Second, "-interval=1s")
+	f.Storage = flag.String("storage", "sqlite", "-storage=sqlite|postgres")
+	f.DSN = flag.String("dsn", "keeper.db", "-dsn=CONNECTION_STRING")
 }
 
 // Config contains all the settings for configuring the application.
@@ -35,6 +39,8 @@ type Config struct {
 	EncryptionKey    string
 	Token            string
 	DeletionInterval time.Duration
+	Storage          string
+	DSN              string
 }
 
 // New initializing the config for the application.
@@ -61,5 +67,7 @@ func New() (*Config, error) {
 		EncryptionKey:    *f.EncryptionKey,
 		Token:            *f.Token,
 		DeletionInterval: *f.DeletionInterval,
+		Storage:          *f.Storage,
+		DSN:              *f.DSN,
 	}, nil
 }

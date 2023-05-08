@@ -1,9 +1,14 @@
 package storage
 
 import (
+	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"password-keeper/internal/entity"
+	"password-keeper/internal/storage/postgres"
+	"password-keeper/internal/storage/queries"
+	"password-keeper/internal/storage/sqlite"
 	"sync"
 )
 
@@ -12,18 +17,58 @@ type RealStorage interface {
 	Get(chatID int64, service string) (entity.Pair, error)
 	Delete(chatID int64, service string) error
 	GetLang(chatID int64) (string, error)
+	SetLang(chatID int64, lang string) error
 }
 
 type Storage struct {
 	ramStorage  *sync.Map
 	realStorage RealStorage
+	langStorage *sync.Map
 }
 
 var ErrNotFound = errors.New("not found")
 
-func New() (*Storage, error) {
+func New(storageType, dsn string) (*Storage, error) {
+	var rs RealStorage
+
+	switch storageType {
+	case "postgres":
+		db, err := sql.Open("postgres", dsn)
+		if err != nil {
+			return nil, fmt.Errorf("open db: %w", err)
+		}
+
+		err = queries.Prepare(db, "postgres")
+		if err != nil {
+			return nil, fmt.Errorf("prepare db: %w", err)
+		}
+
+		rs, err = postgres.New(db, "file://migrations/postgres")
+		if err != nil {
+			return nil, fmt.Errorf("new postgres: %w", err)
+		}
+	case "sqlite":
+		db, err := sql.Open("sqlite", dsn)
+		if err != nil {
+			return nil, fmt.Errorf("open db: %w", err)
+		}
+
+		rs, err = sqlite.New(db, "file://migrations/sqlite")
+		if err != nil {
+			return nil, fmt.Errorf("new sqlite: %w", err)
+		}
+
+		err = queries.Prepare(db, "sqlite")
+		if err != nil {
+			return nil, fmt.Errorf("prepare db: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unknown storage type: %s", storageType)
+	}
 	return &Storage{
-		ramStorage: &sync.Map{},
+		ramStorage:  &sync.Map{},
+		langStorage: &sync.Map{},
+		realStorage: rs,
 	}, nil
 }
 
@@ -34,7 +79,7 @@ func (s *Storage) Save(chatID int64, service string, pair entity.Pair) error {
 	}
 
 	us.Store(service, pair)
-	return nil
+	return s.realStorage.Save(chatID, service, pair)
 }
 
 func (s *Storage) getUserStorage(chatID int64) (*sync.Map, error) {
@@ -52,12 +97,12 @@ func (s *Storage) getUserStorage(chatID int64) (*sync.Map, error) {
 func (s *Storage) Get(chatID int64, service string) (entity.Pair, error) {
 	us, err := s.getUserStorage(chatID)
 	if err != nil {
-		return entity.Pair{}, err
+		return s.realStorage.Get(chatID, service)
 	}
 
 	value, ok := us.Load(service)
 	if !ok {
-		return entity.Pair{}, ErrNotFound
+		return s.realStorage.Get(chatID, service)
 	}
 
 	pair, ok := value.(entity.Pair)
@@ -75,5 +120,33 @@ func (s *Storage) Delete(chatID int64, service string) error {
 	}
 
 	us.Delete(service)
+	return nil
+}
+
+func (s *Storage) GetLang(chatID int64) (string, error) {
+	lang, loaded := s.langStorage.LoadOrStore(chatID, "en")
+	if !loaded {
+		lang, err := s.realStorage.GetLang(chatID)
+		if err != nil {
+			return "", fmt.Errorf("get lang: %w", err)
+		}
+		s.langStorage.Store(chatID, lang)
+		return lang, nil
+	}
+
+	l, ok := lang.(string)
+	if !ok {
+		return "", ErrNotFound
+	}
+
+	return l, nil
+}
+
+func (s *Storage) SetLang(chatID int64, lang string) error {
+	s.langStorage.Store(chatID, lang)
+	err := s.realStorage.SetLang(chatID, lang)
+	if err != nil {
+		return fmt.Errorf("set lang: %w", err)
+	}
 	return nil
 }
