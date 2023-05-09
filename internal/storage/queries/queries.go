@@ -22,16 +22,16 @@ const (
 )
 
 var queriesSqlite = map[Name]Query{
-	AddService:          "INSERT INTO services (service, login, password, owner) VALUES (?, ?, ?, ?) ON CONFLICT DO UPDATE SET login = ?, password = ?, owner = ? WHERE service = ?",
-	AddOrUpdateChatLang: "INSERT INTO chats (chat_id, chat_lang) VALUES (?, ?) ON CONFLICT DO UPDATE SET chat_lang = ? WHERE chat_id = ?",
+	AddService:          "INSERT INTO services (service, login, password, owner) VALUES (?, ?, ?, ?) ON CONFLICT DO UPDATE SET login = ?, password = ?, owner = ?",
+	AddOrUpdateChatLang: "INSERT INTO chats (chat_id, chat_lang) VALUES (?, ?) ON CONFLICT DO UPDATE SET chat_lang = ?",
 	GetService:          "SELECT login, password FROM services WHERE service = ? and owner = ?",
 	GetLang:             "SELECT chat_lang FROM chats WHERE chat_id = ?",
 	DeleteService:       "DELETE FROM services WHERE service = ? and owner = ?",
 }
 
 var queriesPostgres = map[Name]Query{
-	AddService:          "INSERT INTO services (service, login, password, owner) VALUES ($1, $2, $3, $4) ON CONFLICT DO UPDATE SET login = $5, password = $6, owner = $7 WHERE service = $8",
-	AddOrUpdateChatLang: "INSERT INTO chats (chat_id, chat_lang) VALUES ($1, $2) ON CONFLICT DO UPDATE SET chat_lang = $3 WHERE chat_id = $4",
+	AddService:          "INSERT INTO services (service, login, password, owner) VALUES ($1, $2, $3, $4) ON CONFLICT (owner) DO UPDATE SET login = $5, password = $6, owner = $7",
+	AddOrUpdateChatLang: "INSERT INTO chats (chat_id, chat_lang) VALUES ($1, $2) ON CONFLICT (chat_id) DO UPDATE SET chat_lang = $3",
 	GetService:          "SELECT login, password FROM services WHERE service = $1 and owner = $2",
 	GetLang:             "SELECT chat_lang FROM chats WHERE chat_id = $1",
 	DeleteService:       "DELETE FROM services WHERE service = $1 and owner = $2",

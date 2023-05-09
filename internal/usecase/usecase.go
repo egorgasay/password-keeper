@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
@@ -88,7 +89,7 @@ func (uc *UseCase) GetLang(chatID int64) string {
 func (uc *UseCase) SetLang(chatID int64, lang string) {
 	err := uc.storage.SetLang(chatID, lang)
 	if err != nil {
-		log.Println(err)
+		log.Println(err) // TODO: USE LOGGER
 	}
 }
 
@@ -101,17 +102,22 @@ func (uc *UseCase) Encrypt(text string) string {
 
 	ciphertext := make([]byte, len(text))
 	uc.cipher.Encrypt(ciphertext, []byte(text))
-	return string(ciphertext)
+	return base64.RawStdEncoding.EncodeToString(ciphertext)
 }
 
 func (uc *UseCase) Decrypt(text string) string {
 	if text == "" {
-		return ""
+		return text
 	} else if len(text) < aes.BlockSize {
+		return text
+	}
+
+	ciphertext, err := base64.RawStdEncoding.DecodeString(text)
+	if err != nil {
+		log.Println(err)
 		return ""
 	}
 
-	ciphertext := []byte(text)
 	plaintext := make([]byte, len(text))
 	uc.cipher.Decrypt(plaintext, ciphertext)
 	return strings.TrimSpace(string(plaintext))
@@ -124,5 +130,5 @@ func (uc *UseCase) Hash(text string) (string, error) {
 		return "", err
 	}
 
-	return string(hash.Sum(nil)), nil
+	return base64.RawStdEncoding.EncodeToString(hash.Sum(nil)), nil
 }

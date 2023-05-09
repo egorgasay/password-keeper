@@ -38,14 +38,14 @@ func New(storageType, dsn string) (*Storage, error) {
 			return nil, fmt.Errorf("open db: %w", err)
 		}
 
-		err = queries.Prepare(db, "postgres")
-		if err != nil {
-			return nil, fmt.Errorf("prepare db: %w", err)
-		}
-
 		rs, err = postgres.New(db, "file://migrations/postgres")
 		if err != nil {
 			return nil, fmt.Errorf("new postgres: %w", err)
+		}
+
+		err = queries.Prepare(db, "postgres")
+		if err != nil {
+			return nil, fmt.Errorf("prepare db: %w", err)
 		}
 	case "sqlite":
 		db, err := sql.Open("sqlite", dsn)

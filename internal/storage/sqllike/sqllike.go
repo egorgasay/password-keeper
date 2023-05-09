@@ -15,7 +15,7 @@ func (db DB) Save(chatID int64, service string, pair entity.Pair) error {
 	if err != nil {
 		return err
 	}
-	_, err = prep.Exec(service, pair.Login, pair.Password, chatID, pair.Login, pair.Password, chatID, service)
+	_, err = prep.Exec(service, pair.Login, pair.Password, chatID, pair.Login, pair.Password, chatID)
 	return err
 }
 
@@ -36,7 +36,7 @@ func (db DB) Delete(chatID int64, service string) error {
 		return err
 	}
 
-	_, err = prep.Exec(chatID, service)
+	_, err = prep.Exec(service, chatID)
 	return err
 }
 
@@ -56,6 +56,6 @@ func (db DB) SetLang(chatID int64, lang string) error {
 	if err != nil {
 		return err
 	}
-	_, err = prep.Exec(chatID, lang, lang, chatID)
+	_, err = prep.Exec(chatID, lang, lang)
 	return err
 }

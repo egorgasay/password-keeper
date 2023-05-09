@@ -174,6 +174,23 @@ func (b *Bot) handleDel(msg *tgapi.Message) {
 	msgConfig := tgapi.NewMessage(msg.Chat.ID, b.handleMessageLang(del, msg.Chat.ID))
 	if len(split) != 2 {
 		msgConfig = tgapi.NewMessage(msg.Chat.ID, b.handleMessageLang(wrongInputErr, msg.Chat.ID))
+		m, err := b.Send(msgConfig)
+		if err != nil {
+			log.Println("send error: ", err)
+		} else {
+			b.toHide <- messageInfo{
+				chatID:    msg.Chat.ID,
+				id:        msg.MessageID,
+				createdAt: time.Now(),
+			}
+
+			b.toHide <- messageInfo{
+				chatID:    m.Chat.ID,
+				id:        m.MessageID,
+				createdAt: time.Now(),
+			}
+		}
+		return
 	}
 	service := split[1]
 

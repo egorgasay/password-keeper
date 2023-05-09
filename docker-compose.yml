@@ -6,7 +6,7 @@ services:
     volumes:
       - .:/go/src/go-with-compose
     working_dir: /go/src/go-with-compose
-    command: go run cmd/keeper/main.go -storage=postgres -dsn=host=postgres user=${POSTGRES_DB:-admin} password=${POSTGRES_DB:-admin} dbname=${POSTGRES_DB:-admin} sslmode=disable
+    command: go run cmd/keeper/main.go -storage=postgres -dsn='host=postgres user=${POSTGRES_DB:-admin} password=${POSTGRES_DB:-admin} dbname=${POSTGRES_DB:-admin} sslmode=disable'
     depends_on:
       - postgres
     environment:
@@ -19,3 +19,5 @@ services:
         POSTGRES_DB: ${POSTGRES_DB:-admin}
         POSTGRES_USER: ${POSTGRES_USER:-admin}
         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      ports:
+        -  "127.0.0.1:5436:5432"
