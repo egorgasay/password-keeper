@@ -55,8 +55,6 @@ func (b *Bot) Start() {
 	u.Timeout = 60
 	b.toHide, b.stopHiding = b.Watch()
 
-	//startMessage = fmt.Sprintf(startMessage, b.hideInterval)
-
 	updates := b.GetUpdatesChan(u)
 	for update := range updates {
 		if update.CallbackQuery != nil {

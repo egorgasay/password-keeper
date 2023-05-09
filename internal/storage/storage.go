@@ -47,15 +47,22 @@ func New(storageType, dsn string) (*Storage, error) {
 		if err != nil {
 			return nil, fmt.Errorf("prepare db: %w", err)
 		}
-	case "sqlite":
+	case "sqlite", "test":
 		db, err := sql.Open("sqlite", dsn)
 		if err != nil {
 			return nil, fmt.Errorf("open db: %w", err)
 		}
 
-		rs, err = sqlite.New(db, "file://migrations/sqlite")
-		if err != nil {
-			return nil, fmt.Errorf("new sqlite: %w", err)
+		if storageType == "test" {
+			rs, err = sqlite.New(db, "file://../../migrations/sqlite")
+			if err != nil {
+				return nil, fmt.Errorf("new sqlite: %w", err)
+			}
+		} else {
+			rs, err = sqlite.New(db, "file://migrations/sqlite")
+			if err != nil {
+				return nil, fmt.Errorf("new sqlite: %w", err)
+			}
 		}
 
 		err = queries.Prepare(db, "sqlite")

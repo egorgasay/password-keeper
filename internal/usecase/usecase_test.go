@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"os"
 	"password-keeper/internal/entity"
 	"password-keeper/internal/storage"
 	"reflect"
@@ -9,11 +8,7 @@ import (
 )
 
 func newUseCase(t *testing.T) *UseCase {
-	err := os.Chdir("../../")
-	if err != nil {
-		t.Fatalf("Chdir() error = %v", err)
-	}
-	s, err := storage.New("sqlite", "file::memory:?cache=shared")
+	s, err := storage.New("test", "file::memory:?cache=shared")
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
