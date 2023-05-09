@@ -15,7 +15,7 @@ func (db DB) Save(chatID int64, service string, pair entity.Pair) error {
 	if err != nil {
 		return err
 	}
-	_, err = prep.Exec(chatID, service, pair.Login, pair.Password)
+	_, err = prep.Exec(service, pair.Login, pair.Password, chatID, pair.Login, pair.Password, chatID, service)
 	return err
 }
 
@@ -26,7 +26,7 @@ func (db DB) Get(chatID int64, service string) (entity.Pair, error) {
 	}
 
 	var pair entity.Pair
-	err = prep.QueryRow(chatID, service).Scan(&pair.Login, &pair.Password)
+	err = prep.QueryRow(service, chatID).Scan(&pair.Login, &pair.Password)
 	return pair, err
 }
 

@@ -3,7 +3,7 @@ CREATE TABLE chats (
     chat_lang VARCHAR(20)
 );
 CREATE TABLE services (
-     service TEXT,
+     service TEXT PRIMARY KEY,
      login TEXT,
      password TEXT,
      owner INTEGER REFERENCES chats(chat_id)

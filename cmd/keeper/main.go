@@ -23,7 +23,10 @@ func main() {
 		log.Fatalf("storage error: %s", err)
 	}
 
-	logic := usecase.New(store, cfg.EncryptionKey)
+	logic, err := usecase.New(store, cfg.EncryptionKey)
+	if err != nil {
+		log.Fatalf("logic error: %s", err)
+	}
 
 	logger, err := zap.NewProduction()
 	if err != nil {
@@ -35,6 +38,7 @@ func main() {
 		log.Fatalf("bot error: %s", err)
 	}
 
+	log.Println("Starting bot...")
 	go b.Start()
 
 	quit := make(chan os.Signal, 1)

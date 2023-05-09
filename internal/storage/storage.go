@@ -97,12 +97,30 @@ func (s *Storage) getUserStorage(chatID int64) (*sync.Map, error) {
 func (s *Storage) Get(chatID int64, service string) (entity.Pair, error) {
 	us, err := s.getUserStorage(chatID)
 	if err != nil {
-		return s.realStorage.Get(chatID, service)
+		if !errors.Is(err, ErrNotFound) {
+			return entity.Pair{}, err
+		}
+
+		p, err := s.realStorage.Get(chatID, service)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return entity.Pair{}, ErrNotFound
+			}
+			return entity.Pair{}, err
+		}
+		return p, nil
 	}
 
 	value, ok := us.Load(service)
 	if !ok {
-		return s.realStorage.Get(chatID, service)
+		p, err := s.realStorage.Get(chatID, service)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return entity.Pair{}, ErrNotFound
+			}
+			return entity.Pair{}, err
+		}
+		return p, nil
 	}
 
 	pair, ok := value.(entity.Pair)

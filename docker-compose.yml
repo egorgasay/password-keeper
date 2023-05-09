@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  watcher:
+    image: golang:1.19-alpine
+    volumes:
+      - .:/go/src/go-with-compose
+    working_dir: /go/src/go-with-compose
+    command: go run cmd/keeper/main.go -storage=postgres -dsn=host=postgres user=${POSTGRES_DB:-admin} password=${POSTGRES_DB:-admin} dbname=${POSTGRES_DB:-admin} sslmode=disable
+    depends_on:
+      - postgres
+    environment:
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-PASTE_YOUR_ENCRYPTION_KEY}
+      - TELEGRAM_API_KEY=${TELEGRAM_API_KEY:-PASTE_YOUR_TOKEN}
+  postgres:
+      image: postgres:15
+      restart: always
+      environment:
+        POSTGRES_DB: ${POSTGRES_DB:-admin}
+        POSTGRES_USER: ${POSTGRES_USER:-admin}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
