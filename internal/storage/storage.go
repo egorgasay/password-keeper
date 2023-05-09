@@ -8,6 +8,7 @@ import (
 	"password-keeper/internal/entity"
 	"password-keeper/internal/storage/postgres"
 	"password-keeper/internal/storage/queries"
+	"password-keeper/internal/storage/service"
 	"password-keeper/internal/storage/sqlite"
 	"sync"
 )
@@ -138,13 +139,20 @@ func (s *Storage) Get(chatID int64, service string) (entity.Pair, error) {
 	return pair, nil
 }
 
-func (s *Storage) Delete(chatID int64, service string) error {
+func (s *Storage) Delete(chatID int64, serviceName string) error {
 	us, err := s.getUserStorage(chatID)
 	if err != nil {
 		return err
 	}
 
-	us.Delete(service)
+	us.Delete(serviceName)
+	err = s.realStorage.Delete(chatID, serviceName)
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("realStorage delete: %w", err)
+	}
 	return nil
 }
 

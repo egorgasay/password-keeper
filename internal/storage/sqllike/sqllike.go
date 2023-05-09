@@ -2,8 +2,10 @@ package sqllike
 
 import (
 	"database/sql"
+	"errors"
 	"password-keeper/internal/entity"
 	"password-keeper/internal/storage/queries"
+	"password-keeper/internal/storage/service"
 )
 
 type DB struct {
@@ -30,14 +32,26 @@ func (db DB) Get(chatID int64, service string) (entity.Pair, error) {
 	return pair, err
 }
 
-func (db DB) Delete(chatID int64, service string) error {
+var ErrNotFound = errors.New("not found")
+
+func (db DB) Delete(chatID int64, serviceName string) error {
 	prep, err := queries.GetPreparedStatement(queries.DeleteService)
 	if err != nil {
 		return err
 	}
 
-	_, err = prep.Exec(service, chatID)
-	return err
+	r, err := prep.Exec(serviceName, chatID)
+	if err != nil {
+		return err
+	}
+	a, err := r.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if a == 0 {
+		return service.ErrNotFound
+	}
+	return nil
 }
 
 func (db DB) GetLang(chatID int64) (string, error) {

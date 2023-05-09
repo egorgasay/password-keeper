@@ -196,8 +196,12 @@ func (b *Bot) handleDel(msg *tgapi.Message) {
 
 	err := b.logic.Delete(msg.Chat.ID, service)
 	if err != nil {
-		msgConfig.Text = b.handleMessageLang(delErr, msg.Chat.ID)
-		log.Printf("del error: %v\n", err)
+		if errors.Is(err, storage.ErrNotFound) {
+			msgConfig.Text = b.handleMessageLang(serviceNotFoundErr, msg.Chat.ID)
+		} else {
+			msgConfig.Text = b.handleMessageLang(delErr, msg.Chat.ID)
+			log.Printf("del error: %v\n", err)
+		}
 	}
 
 	m, err := b.Send(msgConfig)

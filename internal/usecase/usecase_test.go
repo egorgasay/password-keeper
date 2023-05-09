@@ -89,9 +89,23 @@ func TestUseCase_Delete(t *testing.T) {
 				service: "teqdwqwdqdst",
 			},
 		},
+		{
+			name: "not found",
+			args: args{
+				chatID:  197,
+				service: "teqdwqwdqdst",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if !tt.wantErr {
+				err := uc.Save(tt.args.chatID, tt.args.service, "test", "test")
+				if err != nil {
+					t.Errorf("Save() error = %v", err)
+				}
+			}
 			if err := uc.Delete(tt.args.chatID, tt.args.service); (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 			}

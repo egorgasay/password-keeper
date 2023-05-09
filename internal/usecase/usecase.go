@@ -60,15 +60,20 @@ func (uc *UseCase) Save(chatID int64, service, login, password string) error {
 
 	if err := uc.storage.Save(chatID, service, entity.Pair{Login: login, Password: password}); err != nil {
 		log.Println(err)
-		return err
+		return fmt.Errorf("usecase.Save: %w", err)
 	}
 	return nil
 }
 
-func (uc *UseCase) Delete(chatID int64, service string) error {
+func (uc *UseCase) Delete(chatID int64, service string) (err error) {
+	service, err = uc.Hash(service)
+	if err != nil {
+		log.Println(fmt.Errorf("usecase.Hash: %w", err))
+		return fmt.Errorf("usecase.Hash: %w", err)
+	}
 	if err := uc.storage.Delete(chatID, service); err != nil {
 		log.Println(err)
-		return err
+		return fmt.Errorf("usecase.Delete: %w", err)
 	}
 	return nil
 }

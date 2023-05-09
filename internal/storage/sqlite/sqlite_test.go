@@ -71,18 +71,22 @@ func TestDB_Delete(t *testing.T) {
 				chatID:  3,
 				service: "test",
 			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := st.Exec(
-				"INSERT INTO services (service, login, password, owner)  VALUES (?, ?, ?, ?)",
-				tt.args.service, "test", "test", tt.args.chatID,
-			)
-			if err != nil {
-				t.Errorf("can't insert the record: %v", err)
-				return
+			if !tt.wantErr {
+				_, err := st.Exec(
+					"INSERT INTO services (service, login, password, owner)  VALUES (?, ?, ?, ?)",
+					tt.args.service, "test", "test", tt.args.chatID,
+				)
+				if err != nil {
+					t.Errorf("can't insert the record: %v", err)
+					return
+				}
 			}
+
 			if err := st.Delete(tt.args.chatID, tt.args.service); (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 			}
