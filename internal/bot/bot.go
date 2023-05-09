@@ -21,8 +21,6 @@ type Bot struct {
 	stopHiding   func()
 	toHide       chan messageInfo
 	hideInterval int64
-
-	langStorage map[string]messages
 }
 
 type messages struct {

@@ -100,15 +100,18 @@ func (uc *UseCase) Encrypt(text string) string {
 		text += strings.Repeat(" ", aes.BlockSize-len(text))
 	}
 
-	ciphertext := make([]byte, len(text))
-	uc.cipher.Encrypt(ciphertext, []byte(text))
+	plainText := []byte(text)
+	cfb := cipher.NewCFBEncrypter(uc.cipher, bytes)
+	ciphertext := make([]byte, len(plainText))
+	cfb.XORKeyStream(ciphertext, plainText)
+
 	return base64.RawStdEncoding.EncodeToString(ciphertext)
 }
 
+var bytes = []byte{35, 46, 57, 24, 85, 35, 24, 74, 87, 35, 88, 98, 66, 32, 14, 05}
+
 func (uc *UseCase) Decrypt(text string) string {
-	if text == "" {
-		return text
-	} else if len(text) < aes.BlockSize {
+	if text == "" || len(text) < aes.BlockSize {
 		return text
 	}
 
@@ -118,9 +121,11 @@ func (uc *UseCase) Decrypt(text string) string {
 		return ""
 	}
 
-	plaintext := make([]byte, len(text))
-	uc.cipher.Decrypt(plaintext, ciphertext)
-	return strings.TrimSpace(string(plaintext))
+	cfb := cipher.NewCFBDecrypter(uc.cipher, bytes)
+	plainText := make([]byte, len(ciphertext))
+	cfb.XORKeyStream(plainText, ciphertext)
+
+	return strings.Trim(string(plainText), " ")
 }
 
 func (uc *UseCase) Hash(text string) (string, error) {

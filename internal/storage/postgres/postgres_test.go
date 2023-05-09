@@ -79,12 +79,6 @@ func TestMain(m *testing.M) {
 	os.Exit(r)
 }
 
-func cleanup(filename string) {
-	if err := os.Remove(filename); err != nil {
-		log.Fatalf("can't remove the db: %v", err)
-	}
-}
-
 func TestDB_Delete(t *testing.T) {
 	type args struct {
 		chatID  int64
