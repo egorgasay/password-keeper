@@ -29,6 +29,7 @@ func (b *Bot) handleMessage() {
 
 }
 
+// handleMessageLang handles messages languages.
 func (b *Bot) handleMessageLang(msg string, chatID int64) string {
 	lang := b.logic.GetLang(chatID)
 	switch lang {
@@ -39,6 +40,7 @@ func (b *Bot) handleMessageLang(msg string, chatID int64) string {
 	}
 }
 
+// handleKeyboardLang handles keyboards languages.
 func (b *Bot) handleKeyboardLang(keyboard string, chatID int64) tgapi.InlineKeyboardMarkup {
 	lang := b.logic.GetLang(chatID)
 	switch lang {

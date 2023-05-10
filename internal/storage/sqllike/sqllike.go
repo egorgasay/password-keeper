@@ -2,16 +2,17 @@ package sqllike
 
 import (
 	"database/sql"
-	"errors"
 	"password-keeper/internal/entity"
 	"password-keeper/internal/storage/queries"
 	"password-keeper/internal/storage/service"
 )
 
+// DB is sql-like storage.
 type DB struct {
 	*sql.DB
 }
 
+// Save saves service to chat.
 func (db DB) Save(chatID int64, service string, pair entity.Pair) error {
 	prep, err := queries.GetPreparedStatement(queries.AddService)
 	if err != nil {
@@ -21,6 +22,7 @@ func (db DB) Save(chatID int64, service string, pair entity.Pair) error {
 	return err
 }
 
+// Get gets service from chat.
 func (db DB) Get(chatID int64, service string) (entity.Pair, error) {
 	prep, err := queries.GetPreparedStatement(queries.GetService)
 	if err != nil {
@@ -32,8 +34,7 @@ func (db DB) Get(chatID int64, service string) (entity.Pair, error) {
 	return pair, err
 }
 
-var ErrNotFound = errors.New("not found")
-
+// Delete deletes service from chat.
 func (db DB) Delete(chatID int64, serviceName string) error {
 	prep, err := queries.GetPreparedStatement(queries.DeleteService)
 	if err != nil {
@@ -54,6 +55,7 @@ func (db DB) Delete(chatID int64, serviceName string) error {
 	return nil
 }
 
+// GetLang gets language for chat.
 func (db DB) GetLang(chatID int64) (string, error) {
 	prep, err := queries.GetPreparedStatement(queries.GetLang)
 	if err != nil {
@@ -65,6 +67,7 @@ func (db DB) GetLang(chatID int64) (string, error) {
 	return lang, err
 }
 
+// SetLang sets language for chat.
 func (db DB) SetLang(chatID int64, lang string) error {
 	prep, err := queries.GetPreparedStatement(queries.AddOrUpdateChatLang)
 	if err != nil {

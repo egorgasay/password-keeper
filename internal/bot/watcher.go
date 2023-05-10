@@ -12,6 +12,7 @@ type messageInfo struct {
 	createdAt time.Time
 }
 
+// Watch watches messages and deletes them after hideInterval.
 func (b *Bot) Watch() (chan messageInfo, func()) {
 	messagesCh := make(chan messageInfo, 10000)
 	cancelCh := make(chan bool)

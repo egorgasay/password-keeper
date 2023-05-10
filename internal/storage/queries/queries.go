@@ -13,6 +13,12 @@ type Query string
 type Name int
 
 // Query names.
+// ----------------
+// AddService - add service.
+// AddOrUpdateChatLang - add or update chat lang.
+// GetService - get service.
+// GetLang - get lang.
+// DeleteService - delete service.
 const (
 	AddService = iota
 	AddOrUpdateChatLang
