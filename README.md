@@ -5,7 +5,7 @@ The bot is designed so that you don't have to remember every password.
 
 ### ✨ Features
 - 🗑 Deleting all messages in the interval specified in the config,
-- 🫣 Hiding messages from the chat by clicking on the interactive button,
+- 🤐 Hiding messages from the chat by clicking on the interactive button,
 - 🌎 Each user has the opportunity to choose a language to communicate with the bot (Russian or English),
 - ℹ️ The ability to choose between two databases: Postgresql and Sqlite,
 - 👤 Each user has their own space, so one user will not be able to access the passwords of another.
