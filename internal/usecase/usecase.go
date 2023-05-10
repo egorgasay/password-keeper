@@ -3,17 +3,20 @@ package usecase
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"password-keeper/internal/entity"
 	"password-keeper/internal/storage"
 	"strings"
 )
 
+// UseCase is the main struct for the application logic.
 type UseCase struct {
 	storage *storage.Storage
 	cipher  cipher.Block
@@ -21,6 +24,7 @@ type UseCase struct {
 
 const defaultLanguage = "en"
 
+// New creates a new UseCase.
 func New(storage *storage.Storage, key string) (*UseCase, error) {
 	cipher, err := aes.NewCipher([]byte(key))
 	if err != nil {
@@ -33,6 +37,7 @@ func New(storage *storage.Storage, key string) (*UseCase, error) {
 	}, nil
 }
 
+// Get returns the pair from the storage.
 func (uc *UseCase) Get(chatID int64, service string) (entity.Pair, error) {
 	service, err := uc.Hash(service)
 	if err != nil {
@@ -50,6 +55,7 @@ func (uc *UseCase) Get(chatID int64, service string) (entity.Pair, error) {
 	return pair, nil
 }
 
+// Save saves the pair to the storage.
 func (uc *UseCase) Save(chatID int64, service, login, password string) error {
 	login, password = uc.Encrypt(login), uc.Encrypt(password)
 	service, err := uc.Hash(service)
@@ -65,6 +71,7 @@ func (uc *UseCase) Save(chatID int64, service, login, password string) error {
 	return nil
 }
 
+// Delete deletes the pair from the storage.
 func (uc *UseCase) Delete(chatID int64, service string) (err error) {
 	service, err = uc.Hash(service)
 	if err != nil {
@@ -78,6 +85,7 @@ func (uc *UseCase) Delete(chatID int64, service string) (err error) {
 	return nil
 }
 
+// GetLang returns the language of the user.
 func (uc *UseCase) GetLang(chatID int64) string {
 	l, err := uc.storage.GetLang(chatID)
 	if err != nil {
@@ -91,6 +99,7 @@ func (uc *UseCase) GetLang(chatID int64) string {
 	return l
 }
 
+// SetLang sets the language of the user.
 func (uc *UseCase) SetLang(chatID int64, lang string) {
 	err := uc.storage.SetLang(chatID, lang)
 	if err != nil {
@@ -98,6 +107,7 @@ func (uc *UseCase) SetLang(chatID int64, lang string) {
 	}
 }
 
+// Encrypt encrypts the text.
 func (uc *UseCase) Encrypt(text string) string {
 	if text == "" {
 		return ""
@@ -106,15 +116,20 @@ func (uc *UseCase) Encrypt(text string) string {
 	}
 
 	plainText := []byte(text)
-	cfb := cipher.NewCFBEncrypter(uc.cipher, bytes)
-	ciphertext := make([]byte, len(plainText))
-	cfb.XORKeyStream(ciphertext, plainText)
+	cipherText := make([]byte, aes.BlockSize+len(plainText))
+	iv := cipherText[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		log.Println(err)
+		return ""
+	}
 
-	return base64.RawStdEncoding.EncodeToString(ciphertext)
+	stream := cipher.NewCFBEncrypter(uc.cipher, iv)
+	stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
+
+	return base64.RawStdEncoding.EncodeToString(cipherText)
 }
 
-var bytes = []byte{35, 46, 57, 24, 85, 35, 24, 74, 87, 35, 88, 98, 66, 32, 14, 05}
-
+// Decrypt decrypts the text.
 func (uc *UseCase) Decrypt(text string) string {
 	if text == "" || len(text) < aes.BlockSize {
 		return text
@@ -126,13 +141,15 @@ func (uc *UseCase) Decrypt(text string) string {
 		return ""
 	}
 
-	cfb := cipher.NewCFBDecrypter(uc.cipher, bytes)
-	plainText := make([]byte, len(ciphertext))
-	cfb.XORKeyStream(plainText, ciphertext)
+	iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
+	cfb := cipher.NewCFBDecrypter(uc.cipher, iv)
+	cfb.XORKeyStream(ciphertext, ciphertext)
 
-	return strings.Trim(string(plainText), " ")
+	return strings.Trim(string(ciphertext), " ")
 }
 
+// Hash hashes the text.
 func (uc *UseCase) Hash(text string) (string, error) {
 	hash := sha256.New()
 	_, err := hash.Write([]byte(text))

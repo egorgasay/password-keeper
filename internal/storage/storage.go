@@ -13,6 +13,7 @@ import (
 	"sync"
 )
 
+// RealStorage is an interface that allows to use different storages.
 type RealStorage interface {
 	Save(chatID int64, service string, pair entity.Pair) error
 	Get(chatID int64, service string) (entity.Pair, error)
@@ -21,14 +22,17 @@ type RealStorage interface {
 	SetLang(chatID int64, lang string) error
 }
 
+// Storage is a struct that contains all methods for working with user services
 type Storage struct {
 	ramStorage  *sync.Map
 	realStorage RealStorage
 	langStorage *sync.Map
 }
 
+// ErrNotFound is returned when user service is not found.
 var ErrNotFound = errors.New("not found")
 
+// New Storage constructor.
 func New(storageType, dsn string) (*Storage, error) {
 	var rs RealStorage
 
@@ -80,6 +84,7 @@ func New(storageType, dsn string) (*Storage, error) {
 	}, nil
 }
 
+// Save saves user service
 func (s *Storage) Save(chatID int64, service string, pair entity.Pair) error {
 	us, err := s.getUserStorage(chatID)
 	if err != nil && !errors.Is(err, ErrNotFound) {
@@ -102,6 +107,7 @@ func (s *Storage) getUserStorage(chatID int64) (*sync.Map, error) {
 	return storage, nil
 }
 
+// Get gets user service
 func (s *Storage) Get(chatID int64, service string) (entity.Pair, error) {
 	us, err := s.getUserStorage(chatID)
 	if err != nil {
@@ -139,6 +145,7 @@ func (s *Storage) Get(chatID int64, service string) (entity.Pair, error) {
 	return pair, nil
 }
 
+// Delete deletes user service
 func (s *Storage) Delete(chatID int64, serviceName string) error {
 	us, err := s.getUserStorage(chatID)
 	if err != nil {
@@ -156,6 +163,7 @@ func (s *Storage) Delete(chatID int64, serviceName string) error {
 	return nil
 }
 
+// GetLang gets user language
 func (s *Storage) GetLang(chatID int64) (string, error) {
 	lang, loaded := s.langStorage.LoadOrStore(chatID, "en")
 	if !loaded {
@@ -175,6 +183,7 @@ func (s *Storage) GetLang(chatID int64) (string, error) {
 	return l, nil
 }
 
+// SetLang sets user language
 func (s *Storage) SetLang(chatID int64, lang string) error {
 	s.langStorage.Store(chatID, lang)
 	err := s.realStorage.SetLang(chatID, lang)

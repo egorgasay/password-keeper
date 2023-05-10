@@ -127,29 +127,23 @@ func TestUseCase_Encrypt(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want string
 	}{
 		{
 			name: "small text",
 			args: args{
 				text: "test1",
 			},
-			want: "tK+KdRoEFu8/ZH+GE5hxQQ",
 		},
 		{
 			name: "big text",
 			args: args{
 				text: "dqwfqwedfefqfqfhkqfjqjfgqwdqwfgqwefhqvdjvqwvf,qwld,qlfmkqmqfqjdnqf",
 			},
-			want: "pLuOZ1pTU6t5ITnXVck3CX4pyu99eZPT32hRrtpsmrNI7zs3tuzvutJUqjnl9x92yn9MQNYHM9S6S0vnxqlQTWOj",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := uc.Encrypt(tt.args.text)
-			if got != tt.want {
-				t.Errorf("Encrypt() = %v, want %v", got, tt.want)
-			}
 
 			if got := uc.Decrypt(got); got != tt.args.text {
 				t.Errorf("Decrypt() = %v, want %v", got, tt.args.text)
