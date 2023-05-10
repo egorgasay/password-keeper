@@ -13,7 +13,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
 	// Postgres driver
-	_ "github.com/jackc/pgx"
+	_ "github.com/lib/pq"
 )
 
 // Postgres struct with *sql.DB instance.
