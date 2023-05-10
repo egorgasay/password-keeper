@@ -19,7 +19,7 @@ type Bot struct {
 	*tgapi.BotAPI
 
 	stopHiding   func()
-	toHide       chan messageInfo
+	toHide       chan MessageInfo
 	hideInterval int64
 }
 

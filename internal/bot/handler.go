@@ -74,13 +74,13 @@ func (b *Bot) handleSet(msg *tgapi.Message) {
 		if err != nil {
 			log.Println("send error: ", err)
 		} else {
-			b.toHide <- messageInfo{
+			b.toHide <- MessageInfo{
 				chatID:    msg.Chat.ID,
 				id:        msg.MessageID,
 				createdAt: time.Now(),
 			}
 
-			b.toHide <- messageInfo{
+			b.toHide <- MessageInfo{
 				chatID:    m.Chat.ID,
 				id:        m.MessageID,
 				createdAt: time.Now(),
@@ -99,13 +99,13 @@ func (b *Bot) handleSet(msg *tgapi.Message) {
 	if err != nil {
 		log.Println("send error: ", err)
 	} else {
-		b.toHide <- messageInfo{
+		b.toHide <- MessageInfo{
 			chatID:    msg.Chat.ID,
 			id:        msg.MessageID,
 			createdAt: time.Now(),
 		}
 
-		b.toHide <- messageInfo{
+		b.toHide <- MessageInfo{
 			chatID:    m.Chat.ID,
 			id:        m.MessageID,
 			createdAt: time.Now(),
@@ -123,13 +123,13 @@ func (b *Bot) handleGet(msg *tgapi.Message) {
 		if err != nil {
 			log.Println("send error: ", err)
 		} else {
-			b.toHide <- messageInfo{
+			b.toHide <- MessageInfo{
 				chatID:    msg.Chat.ID,
 				id:        msg.MessageID,
 				createdAt: time.Now(),
 			}
 
-			b.toHide <- messageInfo{
+			b.toHide <- MessageInfo{
 				chatID:    m.Chat.ID,
 				id:        m.MessageID,
 				createdAt: time.Now(),
@@ -156,13 +156,13 @@ func (b *Bot) handleGet(msg *tgapi.Message) {
 	if err != nil {
 		log.Println("send error: ", err)
 	} else {
-		b.toHide <- messageInfo{
+		b.toHide <- MessageInfo{
 			chatID:    msg.Chat.ID,
 			id:        msg.MessageID,
 			createdAt: time.Now(),
 		}
 
-		b.toHide <- messageInfo{
+		b.toHide <- MessageInfo{
 			chatID:    m.Chat.ID,
 			id:        m.MessageID,
 			createdAt: time.Now(),
@@ -180,13 +180,13 @@ func (b *Bot) handleDel(msg *tgapi.Message) {
 		if err != nil {
 			log.Println("send error: ", err)
 		} else {
-			b.toHide <- messageInfo{
+			b.toHide <- MessageInfo{
 				chatID:    msg.Chat.ID,
 				id:        msg.MessageID,
 				createdAt: time.Now(),
 			}
 
-			b.toHide <- messageInfo{
+			b.toHide <- MessageInfo{
 				chatID:    m.Chat.ID,
 				id:        m.MessageID,
 				createdAt: time.Now(),
@@ -210,13 +210,13 @@ func (b *Bot) handleDel(msg *tgapi.Message) {
 	if err != nil {
 		log.Println("send error: ", err)
 	} else {
-		b.toHide <- messageInfo{
+		b.toHide <- MessageInfo{
 			chatID:    msg.Chat.ID,
 			id:        msg.MessageID,
 			createdAt: time.Now(),
 		}
 
-		b.toHide <- messageInfo{
+		b.toHide <- MessageInfo{
 			chatID:    m.Chat.ID,
 			id:        m.MessageID,
 			createdAt: time.Now(),
