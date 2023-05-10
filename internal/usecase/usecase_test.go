@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"go.uber.org/zap"
+	"log"
 	"password-keeper/internal/entity"
 	"password-keeper/internal/storage"
 	"reflect"
@@ -13,11 +15,23 @@ func newUseCase(t *testing.T) *UseCase {
 		t.Fatalf("New() error = %v", err)
 	}
 
-	uc, err := New(s, "1234567890123456")
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("zap error: %s", err)
+	}
+
+	uc, err := New(s, "1234567890123456", logger)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
 	return uc
+}
+
+func getEncrypted(text string, err error) string {
+	if err != nil {
+		log.Fatalf("Encrypt() error = %v", err)
+	}
+	return text
 }
 
 func TestUseCase_Decrypt(t *testing.T) {
@@ -41,14 +55,14 @@ func TestUseCase_Decrypt(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				text: uc.Encrypt("test"),
+				text: getEncrypted(uc.Encrypt("test")),
 			},
 			want: "test",
 		},
 		{
 			name: "ok #2",
 			args: args{
-				text: uc.Encrypt("dqwfqwedfefqfqfhkqfjqjfgqwdqwfgqwefhqvdjvqwvf"),
+				text: getEncrypted(uc.Encrypt("dqwfqwedfefqfqfhkqfjqjfgqwdqwfgqwefhqvdjvqwvf")),
 			},
 			want: "dqwfqwedfefqfqfhkqfjqjfgqwdqwfgqwefhqvdjvqwvf",
 		},
@@ -56,7 +70,11 @@ func TestUseCase_Decrypt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := uc.Decrypt(tt.args.text); got != tt.want {
+			got, err := uc.Decrypt(tt.args.text)
+			if err != nil {
+				t.Errorf("Decrypt() error = %v", err)
+			}
+			if got != tt.want {
 				t.Errorf("Decrypt() = %v, want %v", got, tt.want)
 			}
 		})
@@ -143,9 +161,17 @@ func TestUseCase_Encrypt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := uc.Encrypt(tt.args.text)
+			got, err := uc.Encrypt(tt.args.text)
+			if err != nil {
+				t.Errorf("Encrypt() error = %v", err)
+			}
 
-			if got := uc.Decrypt(got); got != tt.args.text {
+			got, err = uc.Decrypt(got)
+			if err != nil {
+				t.Errorf("Decrypt() error = %v", err)
+			}
+
+			if got != tt.args.text {
 				t.Errorf("Decrypt() = %v, want %v", got, tt.args.text)
 			}
 		})

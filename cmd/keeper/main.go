@@ -24,14 +24,14 @@ func main() {
 		log.Fatalf("storage error: %s", err)
 	}
 
-	logic, err := usecase.New(store, cfg.EncryptionKey)
-	if err != nil {
-		log.Fatalf("logic error: %s", err)
-	}
-
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("zap error: %s", err)
+	}
+
+	logic, err := usecase.New(store, cfg.EncryptionKey, logger)
+	if err != nil {
+		log.Fatalf("logic error: %s", err)
 	}
 
 	b, err := bot.New(cfg.Token, cfg.DeletionInterval, logic, logger)

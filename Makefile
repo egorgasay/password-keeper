@@ -6,7 +6,7 @@ build:
 	go build -o ${BINARY_NAME} cmd/keeper/main.go
 
 test:
-	go test .\...
+	go test ./...
 
 run:
 	go build -o ${BINARY_NAME} cmd/keeper/main.go

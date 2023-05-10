@@ -9,8 +9,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
-	"log"
 	"password-keeper/internal/entity"
 	"password-keeper/internal/storage"
 	"strings"
@@ -20,12 +20,13 @@ import (
 type UseCase struct {
 	storage *storage.Storage
 	cipher  cipher.Block
+	logger  *zap.Logger
 }
 
 const defaultLanguage = "en"
 
 // New creates a new UseCase.
-func New(storage *storage.Storage, key string) (*UseCase, error) {
+func New(storage *storage.Storage, key string, logger *zap.Logger) (*UseCase, error) {
 	cipher, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return nil, err
@@ -34,6 +35,7 @@ func New(storage *storage.Storage, key string) (*UseCase, error) {
 	return &UseCase{
 		storage: storage,
 		cipher:  cipher,
+		logger:  logger,
 	}, nil
 }
 
@@ -41,33 +43,63 @@ func New(storage *storage.Storage, key string) (*UseCase, error) {
 func (uc *UseCase) Get(chatID int64, service string) (entity.Pair, error) {
 	service, err := uc.Hash(service)
 	if err != nil {
-		log.Println(fmt.Errorf("usecase.Hash: %w", err))
-		return entity.Pair{}, fmt.Errorf("usecase.Hash: %w", err)
+		err = fmt.Errorf("usecase.Hash: %w", err)
+		uc.logger.Warn(err.Error())
+		return entity.Pair{}, err
 	}
 
 	pair, err := uc.storage.Get(chatID, service)
 	if err != nil {
-		log.Println(err)
+		err = fmt.Errorf("usecase.Get: %w", err)
+		uc.logger.Warn(err.Error())
 		return entity.Pair{}, err
 	}
-	pair.Login = uc.Decrypt(pair.Login)
-	pair.Password = uc.Decrypt(pair.Password)
+	pair.Login, err = uc.Decrypt(pair.Login)
+	if err != nil {
+		err = fmt.Errorf("usecase.Decrypt: %w", err)
+		uc.logger.Warn(err.Error())
+		return entity.Pair{}, err
+	}
+
+	pair.Password, err = uc.Decrypt(pair.Password)
+	if err != nil {
+		err = fmt.Errorf("usecase.Decrypt: %w", err)
+		uc.logger.Warn(err.Error())
+		return entity.Pair{}, err
+	}
+
 	return pair, nil
 }
 
 // Save saves the pair to the storage.
-func (uc *UseCase) Save(chatID int64, service, login, password string) error {
-	login, password = uc.Encrypt(login), uc.Encrypt(password)
-	service, err := uc.Hash(service)
+func (uc *UseCase) Save(chatID int64, service, login, password string) (err error) {
+	login, err = uc.Encrypt(login)
 	if err != nil {
-		log.Println(fmt.Errorf("usecase.Hash: %w", err))
-		return fmt.Errorf("usecase.Hash: %w", err)
+		err = fmt.Errorf("usecase.Encrypt: %w", err)
+		uc.logger.Warn(err.Error())
+		return err
+	}
+
+	password, err = uc.Encrypt(password)
+	if err != nil {
+		err = fmt.Errorf("usecase.Encrypt: %w", err)
+		uc.logger.Warn(err.Error())
+		return err
+	}
+
+	service, err = uc.Hash(service)
+	if err != nil {
+		err = fmt.Errorf("usecase.Hash: %w", err)
+		uc.logger.Warn(err.Error())
+		return err
 	}
 
 	if err := uc.storage.Save(chatID, service, entity.Pair{Login: login, Password: password}); err != nil {
-		log.Println(err)
-		return fmt.Errorf("usecase.Save: %w", err)
+		err = fmt.Errorf("usecase.Save: %w", err)
+		uc.logger.Warn(err.Error())
+		return err
 	}
+
 	return nil
 }
 
@@ -75,12 +107,14 @@ func (uc *UseCase) Save(chatID int64, service, login, password string) error {
 func (uc *UseCase) Delete(chatID int64, service string) (err error) {
 	service, err = uc.Hash(service)
 	if err != nil {
-		log.Println(fmt.Errorf("usecase.Hash: %w", err))
-		return fmt.Errorf("usecase.Hash: %w", err)
+		err = fmt.Errorf("usecase.Hash: %w", err)
+		uc.logger.Warn(err.Error())
+		return err
 	}
 	if err := uc.storage.Delete(chatID, service); err != nil {
-		log.Println(err)
-		return fmt.Errorf("usecase.Delete: %w", err)
+		err = fmt.Errorf("usecase.Delete: %w", err)
+		uc.logger.Warn(err.Error())
+		return err
 	}
 	return nil
 }
@@ -93,7 +127,8 @@ func (uc *UseCase) GetLang(chatID int64) string {
 			uc.SetLang(chatID, defaultLanguage)
 			return defaultLanguage
 		}
-		log.Println(err)
+		err = fmt.Errorf("usecase.GetLang: %w", err)
+		uc.logger.Warn(err.Error())
 		return defaultLanguage
 	}
 	return l
@@ -103,14 +138,15 @@ func (uc *UseCase) GetLang(chatID int64) string {
 func (uc *UseCase) SetLang(chatID int64, lang string) {
 	err := uc.storage.SetLang(chatID, lang)
 	if err != nil {
-		log.Println(err) // TODO: USE LOGGER
+		err = fmt.Errorf("usecase.SetLang: %w", err)
+		uc.logger.Warn(err.Error())
 	}
 }
 
 // Encrypt encrypts the text.
-func (uc *UseCase) Encrypt(text string) string {
+func (uc *UseCase) Encrypt(text string) (string, error) {
 	if text == "" {
-		return ""
+		return "", nil
 	} else if len(text) < aes.BlockSize {
 		text += strings.Repeat(" ", aes.BlockSize-len(text))
 	}
@@ -119,26 +155,28 @@ func (uc *UseCase) Encrypt(text string) string {
 	cipherText := make([]byte, aes.BlockSize+len(plainText))
 	iv := cipherText[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		log.Println(err)
-		return ""
+		err = fmt.Errorf("io.ReadFull: %w", err)
+		uc.logger.Warn(err.Error())
+		return "", err
 	}
 
 	stream := cipher.NewCFBEncrypter(uc.cipher, iv)
 	stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
 
-	return base64.RawStdEncoding.EncodeToString(cipherText)
+	return base64.RawStdEncoding.EncodeToString(cipherText), nil
 }
 
 // Decrypt decrypts the text.
-func (uc *UseCase) Decrypt(text string) string {
+func (uc *UseCase) Decrypt(text string) (string, error) {
 	if text == "" || len(text) < aes.BlockSize {
-		return text
+		return text, nil
 	}
 
 	ciphertext, err := base64.RawStdEncoding.DecodeString(text)
 	if err != nil {
-		log.Println(err)
-		return ""
+		err = fmt.Errorf("base64.RawStdEncoding.DecodeString: %w", err)
+		uc.logger.Warn(err.Error())
+		return "", err
 	}
 
 	iv := ciphertext[:aes.BlockSize]
@@ -146,7 +184,7 @@ func (uc *UseCase) Decrypt(text string) string {
 	cfb := cipher.NewCFBDecrypter(uc.cipher, iv)
 	cfb.XORKeyStream(ciphertext, ciphertext)
 
-	return strings.Trim(string(ciphertext), " ")
+	return strings.Trim(string(ciphertext), " "), nil
 }
 
 // Hash hashes the text.
@@ -154,6 +192,8 @@ func (uc *UseCase) Hash(text string) (string, error) {
 	hash := sha256.New()
 	_, err := hash.Write([]byte(text))
 	if err != nil {
+		err = fmt.Errorf("hash.Write: %w", err)
+		uc.logger.Warn(err.Error())
 		return "", err
 	}
 
