@@ -8,6 +8,7 @@ import (
 	"password-keeper/config"
 	"password-keeper/internal/bot"
 	"password-keeper/internal/storage"
+	"password-keeper/internal/storage/queries"
 	"password-keeper/internal/usecase"
 	"syscall"
 )
@@ -49,4 +50,7 @@ func main() {
 	log.Println("Shutdown Server ...")
 
 	b.Stop()
+	if err := queries.Close(); err != nil {
+		log.Fatalf("queries close error: %s", err)
+	}
 }
