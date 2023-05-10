@@ -34,8 +34,8 @@ example: -interval=1s
 ### ⏬ Installation
 
 ```bash
-git clone https://github.com/egorgasay/telemarket
-cd telemarket
+git clone https://github.com/egorgasay/password-keeper
+cd password-keeper
 export TELEGRAM_BOT_KEY=YOUR_BOT_KEY
 export ENCRYPTION_KEY=YOUR_KEY_FOR_ENCRIPTION
 make run
